@@ -18,10 +18,10 @@ services:
       timeout: 5s
       retries: 5
 
-  publisher:
+  producer:
     build:
-      dockerfile: publisher.Dockerfile
-    container_name: publisher
+      dockerfile: producer.Dockerfile
+    container_name: producer
     depends_on:
       rabbit:
         condition: service_healthy
@@ -31,10 +31,10 @@ services:
       RABBITMQ_PASS: password
     tty: True
 
-  receiver:
+  consumer:
     build:
-      dockerfile: receiver.Dockerfile
-    container_name: receiver
+      dockerfile: consumer.Dockerfile
+    container_name: consumer
     depends_on:
       rabbit:
         condition: service_healthy
