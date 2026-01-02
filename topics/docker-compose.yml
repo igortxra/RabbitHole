@@ -1,0 +1,60 @@
+version: "3.9"
+
+services:
+  rabbit:
+    image: rabbitmq:4-management
+    container_name: rabbit
+    hostname: rabbit
+    environment:
+      RABBITMQ_DEFAULT_USER: user
+      RABBITMQ_DEFAULT_PASS: password
+    ports:
+      - "5672:5672"    # AMQP
+      - "15672:15672"  # Management UI
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  publisher:
+    build:
+      dockerfile: publisher.Dockerfile
+    container_name: publisher
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbit
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+    tty: True
+
+  worker-one:
+    build:
+      dockerfile: worker.Dockerfile
+    container_name: critical-logger
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbit
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+      WORKER_NAME: logger.critical
+    tty: True
+
+  worker-two:
+    build:
+      dockerfile: worker.Dockerfile
+    container_name: generic-logger
+    depends_on:
+      rabbit:
+        condition: service_healthy
+    environment:
+      RABBITMQ_HOST: rabbit
+      RABBITMQ_USER: user
+      RABBITMQ_PASS: password
+      WORKER_NAME: logger.*
+    tty: True
